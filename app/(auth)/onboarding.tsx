@@ -27,13 +27,12 @@ const highlights = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const completeOnboarding = useAuthStore(
-    (state) => state.completeOnboarding
-  );
+  const completeOnboarding = useAuthStore((state) => state.completeOnboarding);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const handleContinue = () => {
     completeOnboarding();
-    router.replace("/(auth)/login");
+    router.replace(isAuthenticated ? "/(app)/partner" : "/(auth)/login");
   };
 
   return (

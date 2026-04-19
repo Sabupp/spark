@@ -12,11 +12,14 @@ import { Link, useRouter } from "expo-router";
 import { FadeInView } from "@/components/FadeInView";
 import { InteractiveCard } from "@/components/InteractiveCard";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useCoupleStore } from "@/store/useCoupleStore";
 import { theme } from "@/theme";
 
 export default function LoginScreen() {
   const router = useRouter();
   const signIn = useAuthStore((state) => state.signIn);
+  const onboardingCompleted = useAuthStore((state) => state.onboardingCompleted);
+  const isConnected = useCoupleStore((state) => state.isConnected);
   const [email, setEmail] = useState("alex@spark.app");
   const [password, setPassword] = useState("spark123");
 
@@ -35,6 +38,16 @@ export default function LoginScreen() {
       name: "Alex",
       email
     });
+
+    if (!onboardingCompleted) {
+      router.replace("/(auth)/onboarding");
+      return;
+    }
+
+    if (!isConnected) {
+      router.replace("/(app)/partner");
+      return;
+    }
 
     router.replace("/(app)");
   };

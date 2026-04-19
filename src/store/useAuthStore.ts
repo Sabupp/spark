@@ -12,7 +12,7 @@ const initialUser: User | null = null;
 export const useAuthStore = create<AuthState>((set) => ({
   user: initialUser,
   isAuthenticated: false,
-  hasCompletedOnboarding: false,
+  onboardingCompleted: false,
   preferences: defaultPreferences,
   signIn: (user: User) =>
     set({
@@ -26,7 +26,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }),
   completeOnboarding: () =>
     set({
-      hasCompletedOnboarding: true
+      onboardingCompleted: true
     }),
   toggleNotifications: () =>
     set((state) => ({

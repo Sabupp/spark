@@ -12,7 +12,7 @@ export type AuthPreferences = {
 export type AuthState = {
   user: User | null;
   isAuthenticated: boolean;
-  hasCompletedOnboarding: boolean;
+  onboardingCompleted: boolean;
   preferences: AuthPreferences;
   signIn: (user: User) => void;
   signOut: () => void;
@@ -43,17 +43,34 @@ export type ChallengeState = {
   filteredChallenges: () => Challenge[];
 };
 
-export type ConnectionStatus = "Pending" | "Connected";
-
-export type Partner = {
+export type CouplePartner = {
   id: string;
   name: string;
-  connectedSince: string;
+  email: string;
 };
 
-export type PartnerState = {
-  connectionStatus: ConnectionStatus;
-  pendingInviteCode: string;
-  partner: Partner | null;
-  toggleConnection: () => void;
+export type PendingInvite = {
+  from: string;
+  code: string;
+  expiresAt: string;
+};
+
+export type CoupleStatus = {
+  isConnected: boolean;
+  label: string;
+  partnerName: string | null;
+};
+
+export type CoupleState = {
+  coupleId: string | null;
+  partner: CouplePartner | null;
+  inviteCode: string;
+  isConnected: boolean;
+  pendingInvite: PendingInvite | null;
+  connectedAt: string | null;
+  sharedChallengesCompleted: number;
+  generateInviteCode: () => string;
+  acceptInvite: (code: string) => boolean;
+  disconnectCouple: () => void;
+  getCoupleStatus: () => CoupleStatus;
 };

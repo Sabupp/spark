@@ -1,9 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
+import { useCoupleStore } from "@/store/useCoupleStore";
 import { theme } from "@/theme";
 
 export default function AppLayout() {
+  const isConnected = useCoupleStore((state) => state.isConnected);
+
   return (
     <Tabs
       screenOptions={{
@@ -54,7 +57,13 @@ export default function AppLayout() {
       <Tabs.Screen
         name="partner"
         options={{
-          title: "Partner",
+          title: isConnected ? "Partner" : "Connect",
+          tabBarBadge: isConnected ? undefined : "!",
+          tabBarBadgeStyle: {
+            backgroundColor: theme.colors.accent,
+            color: theme.colors.textPrimary,
+            fontFamily: theme.typography.semibold
+          },
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="heart" size={size} color={color} />
           )
