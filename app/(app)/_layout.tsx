@@ -1,11 +1,24 @@
+import { useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
+import { useAuthStore } from "@/store/useAuthStore";
 import { useCoupleStore } from "@/store/useCoupleStore";
+import { usePremiumStore } from "@/store/usePremiumStore";
 import { theme } from "@/theme";
 
 export default function AppLayout() {
+  const user = useAuthStore((state) => state.user);
   const isConnected = useCoupleStore((state) => state.isConnected);
+  const initializePurchases = usePremiumStore((state) => state.initializePurchases);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    void initializePurchases();
+  }, [initializePurchases, user?.id]);
 
   return (
     <Tabs
@@ -76,6 +89,12 @@ export default function AppLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           )
+        }}
+      />
+      <Tabs.Screen
+        name="paywall"
+        options={{
+          href: null
         }}
       />
     </Tabs>

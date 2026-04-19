@@ -15,6 +15,7 @@ import { InteractiveCard } from "@/components/InteractiveCard";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChallengeStore } from "@/store/useChallengeStore";
 import { useCoupleStore } from "@/store/useCoupleStore";
+import { usePremiumStore } from "@/store/usePremiumStore";
 import { ChallengeCategory } from "@/types";
 import { theme } from "@/theme";
 
@@ -43,6 +44,7 @@ export default function HomeScreen() {
     streak,
     totalPoints,
     dailyChallenge,
+    completedChallenges,
     completedToday,
     isLoading,
     loadChallenges,
@@ -51,6 +53,9 @@ export default function HomeScreen() {
     completeChallenge
   } = useChallengeStore();
   const { isConnected, partner } = useCoupleStore();
+  const isPremium = usePremiumStore((state) => state.isPremium);
+  const canAccessCategory = usePremiumStore((state) => state.canAccessCategory);
+  const remainingTrials = usePremiumStore((state) => state.remainingTrials);
 
   const [celebrating, setCelebrating] = useState(false);
   const pulse = useRef(new Animated.Value(1)).current;
@@ -99,8 +104,32 @@ export default function HomeScreen() {
     ? `Connected with ${partner?.name ?? "your partner"}`
     : "Waiting to connect";
 
+  const todayCompletedCount = useMemo(() => {
+    const now = new Date();
+    return completedChallenges.filter((entry) => {
+      const completedDate = new Date(entry.completed_at);
+      return (
+        completedDate.getFullYear() === now.getFullYear() &&
+        completedDate.getMonth() === now.getMonth() &&
+        completedDate.getDate() === now.getDate()
+      );
+    }).length;
+  }, [completedChallenges]);
+
+  const isDailyChallengeLocked = dailyChallenge
+    ? !canAccessCategory(dailyChallenge.category)
+    : false;
+
   const handleCompleteChallenge = async () => {
-    if (!dailyChallenge || completedToday || isLoading) {
+    if (
+      !dailyChallenge ||
+      completedToday ||
+      isLoading ||
+      (!isPremium && (todayCompletedCount >= 3 || isDailyChallengeLocked))
+    ) {
+      if (!isPremium) {
+        router.push("/(app)/paywall");
+      }
       return;
     }
 
@@ -159,6 +188,12 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionEyebrow}>Daily Challenge</Text>
 
+          <View style={styles.planStatusRow}>
+            <Text style={styles.planStatusText}>
+              {isPremium ? "Premium: Unlimited" : `Free: ${todayCompletedCount}/3 today`}
+            </Text>
+          </View>
+
           {!dailyChallenge ? (
             <View style={styles.loadingCard}>
               <ActivityIndicator color={theme.colors.accent} />
@@ -216,16 +251,27 @@ export default function HomeScreen() {
                     <Text style={styles.completedMessage}>Great job!</Text>
                   </View>
                 ) : (
-                  <InteractiveCard
-                    style={styles.completeButton}
-                    onPress={() => {
-                      void handleCompleteChallenge();
-                    }}
-                  >
-                    <Text style={styles.completeButtonText}>
-                      Complete Today's Challenge
-                    </Text>
-                  </InteractiveCard>
+                  <>
+                    {isDailyChallengeLocked && !isPremium ? (
+                      <View style={styles.lockedNotice}>
+                        <Text style={styles.lockedNoticeText}>
+                          Premium unlocks this category.
+                        </Text>
+                      </View>
+                    ) : null}
+                    <InteractiveCard
+                      style={styles.completeButton}
+                      onPress={() => {
+                        void handleCompleteChallenge();
+                      }}
+                    >
+                      <Text style={styles.completeButtonText}>
+                        {isPremium || remainingTrials > 0
+                          ? "Complete Today's Challenge"
+                          : "Upgrade to Continue"}
+                      </Text>
+                    </InteractiveCard>
+                  </>
                 )}
 
                 {celebrating ? (
@@ -279,6 +325,20 @@ export default function HomeScreen() {
             </Text>
             <Text style={styles.partnerActivityCopy}>
               Shared streak progress is looking strong. Keep the chain alive tonight.
+            </Text>
+          </InteractiveCard>
+        </FadeInView>
+      ) : null}
+
+      {!isPremium ? (
+        <FadeInView delay={220}>
+          <InteractiveCard
+            style={styles.upgradeBanner}
+            onPress={() => router.push("/(app)/paywall")}
+          >
+            <Text style={styles.upgradeBannerTitle}>Upgrade to Premium</Text>
+            <Text style={styles.upgradeBannerCopy}>
+              Unlock all categories, unlimited challenges and partner sync features.
             </Text>
           </InteractiveCard>
         </FadeInView>
@@ -343,6 +403,15 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: theme.spacing.xs
+  },
+  planStatusRow: {
+    alignItems: "flex-start"
+  },
+  planStatusText: {
+    color: theme.colors.textSecondary,
+    fontFamily: theme.typography.medium,
+    fontSize: 13,
+    textTransform: "uppercase"
   },
   sectionEyebrow: {
     color: theme.colors.accentLight,
@@ -425,6 +494,17 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontFamily: theme.typography.medium,
     fontSize: 12
+  },
+  lockedNotice: {
+    backgroundColor: "rgba(230,57,70,0.12)",
+    borderRadius: theme.radii.md,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs
+  },
+  lockedNoticeText: {
+    color: theme.colors.accentLight,
+    fontFamily: theme.typography.medium,
+    fontSize: 13
   },
   completeButton: {
     alignItems: "center",
@@ -529,6 +609,26 @@ const styles = StyleSheet.create({
     lineHeight: 26
   },
   partnerActivityCopy: {
+    color: theme.colors.textSecondary,
+    fontFamily: theme.typography.body,
+    fontSize: 14,
+    lineHeight: 21
+  },
+  upgradeBanner: {
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.accent,
+    borderRadius: theme.radii.lg,
+    borderWidth: 1,
+    gap: theme.spacing.xs,
+    padding: theme.spacing.md,
+    ...theme.shadows.card
+  },
+  upgradeBannerTitle: {
+    color: theme.colors.textPrimary,
+    fontFamily: theme.typography.semibold,
+    fontSize: 20
+  },
+  upgradeBannerCopy: {
     color: theme.colors.textSecondary,
     fontFamily: theme.typography.body,
     fontSize: 14,

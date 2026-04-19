@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { FadeInView } from "@/components/FadeInView";
 import { InteractiveCard } from "@/components/InteractiveCard";
 import { useAuthStore } from "@/store/useAuthStore";
+import { usePremiumStore } from "@/store/usePremiumStore";
 import { theme } from "@/theme";
 
 export default function ProfileScreen() {
@@ -20,10 +21,19 @@ export default function ProfileScreen() {
   );
   const toggleEveningMode = useAuthStore((state) => state.toggleEveningMode);
   const signOut = useAuthStore((state) => state.signOut);
+  const {
+    subscriptionStatus,
+    expiryDate,
+    restorePurchases
+  } = usePremiumStore();
 
   const handleSignOut = async () => {
     await signOut();
     router.replace("/(auth)/login");
+  };
+
+  const handleRestore = async () => {
+    await restorePurchases();
   };
 
   return (
@@ -78,6 +88,34 @@ export default function ProfileScreen() {
       </FadeInView>
 
       <FadeInView delay={200}>
+        <View style={styles.settingsCard}>
+          <Text style={styles.sectionTitle}>Subscription</Text>
+          <Text style={styles.settingTitle}>
+            {subscriptionStatus === "premium" ? "Premium active" : "Free plan"}
+          </Text>
+          <Text style={styles.settingCopy}>
+            {expiryDate
+              ? `Renews or expires on ${new Date(expiryDate).toLocaleDateString("en-US")}.`
+              : "Upgrade to unlock all premium couple features."}
+          </Text>
+
+          <InteractiveCard
+            style={styles.subscriptionPrimary}
+            onPress={() => router.push("/(app)/paywall")}
+          >
+            <Text style={styles.subscriptionPrimaryText}>Manage Subscription</Text>
+          </InteractiveCard>
+
+          <InteractiveCard
+            style={styles.subscriptionSecondary}
+            onPress={() => void handleRestore()}
+          >
+            <Text style={styles.subscriptionSecondaryText}>Restore Purchases</Text>
+          </InteractiveCard>
+        </View>
+      </FadeInView>
+
+      <FadeInView delay={260}>
         <InteractiveCard style={styles.outlineButton} onPress={handleSignOut}>
           <Text style={styles.outlineButtonText}>Logout</Text>
         </InteractiveCard>
@@ -150,6 +188,29 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.body,
     fontSize: 14,
     lineHeight: 20
+  },
+  subscriptionPrimary: {
+    alignItems: "center",
+    backgroundColor: theme.colors.accent,
+    borderRadius: theme.radii.md,
+    paddingVertical: theme.spacing.sm
+  },
+  subscriptionPrimaryText: {
+    color: theme.colors.textPrimary,
+    fontFamily: theme.typography.semibold,
+    fontSize: 15
+  },
+  subscriptionSecondary: {
+    alignItems: "center",
+    borderColor: theme.colors.borderStrong,
+    borderRadius: theme.radii.md,
+    borderWidth: 1,
+    paddingVertical: theme.spacing.sm
+  },
+  subscriptionSecondaryText: {
+    color: theme.colors.textSecondary,
+    fontFamily: theme.typography.medium,
+    fontSize: 15
   },
   outlineButton: {
     alignItems: "center",

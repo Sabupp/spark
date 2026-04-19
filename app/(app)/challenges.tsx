@@ -10,9 +10,11 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 
-import { FadeInView } from "@/components/FadeInView";
 import { InteractiveCard } from "@/components/InteractiveCard";
+import { FadeInView } from "@/components/FadeInView";
+import { PremiumGate } from "../components/PremiumGate";
 import { useChallengeStore } from "@/store/useChallengeStore";
+import { usePremiumStore } from "@/store/usePremiumStore";
 import { Challenge, ChallengeCategory } from "@/types";
 import { theme } from "@/theme";
 
@@ -63,9 +65,13 @@ export default function ChallengesScreen() {
     (state) => state.fetchCompletedChallenges
   );
   const isLoading = useChallengeStore((state) => state.isLoading);
+  const completedChallenges = useChallengeStore((state) => state.completedChallenges);
+  const isPremium = usePremiumStore((state) => state.isPremium);
+  const canAccessCategory = usePremiumStore((state) => state.canAccessCategory);
 
   const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
 
   const columns = width >= 768 ? 2 : 1;
 
@@ -92,7 +98,27 @@ export default function ChallengesScreen() {
     );
   }, [baseChallenges, selectedDifficulty]);
 
+  const todayCompletedCount = useMemo(() => {
+    const now = new Date();
+    return completedChallenges.filter((entry) => {
+      const completedDate = new Date(entry.completed_at);
+      return (
+        completedDate.getFullYear() === now.getFullYear() &&
+        completedDate.getMonth() === now.getMonth() &&
+        completedDate.getDate() === now.getDate()
+      );
+    }).length;
+  }, [completedChallenges]);
+
   const openChallenge = (challenge: Challenge) => {
+    const isLockedCategory = !canAccessCategory(challenge.category);
+    const hasReachedFreeLimit = !isPremium && todayCompletedCount >= 3;
+
+    if (isLockedCategory || hasReachedFreeLimit) {
+      setShowPremiumGate(true);
+      return;
+    }
+
     setSelectedChallenge(challenge);
   };
 
@@ -237,15 +263,22 @@ export default function ChallengesScreen() {
                     style={styles.challengeCardInner}
                   >
                     <View style={styles.cardTop}>
-                      <View
-                        style={[
-                          styles.categoryBadge,
-                          { backgroundColor: categoryColors[challenge.category] }
-                        ]}
-                      >
-                        <Text style={styles.categoryBadgeText}>
-                          {categoryLabels[challenge.category]}
-                        </Text>
+                      <View style={styles.badgeColumn}>
+                        <View
+                          style={[
+                            styles.categoryBadge,
+                            { backgroundColor: categoryColors[challenge.category] }
+                          ]}
+                        >
+                          <Text style={styles.categoryBadgeText}>
+                            {categoryLabels[challenge.category]}
+                          </Text>
+                        </View>
+                        {!canAccessCategory(challenge.category) ? (
+                          <View style={styles.premiumBadge}>
+                            <Text style={styles.premiumBadgeText}>Premium</Text>
+                          </View>
+                        ) : null}
                       </View>
                       <View style={styles.durationBadge}>
                         <Text style={styles.durationBadgeText}>{challenge.duration}</Text>
@@ -357,6 +390,13 @@ export default function ChallengesScreen() {
           </View>
         </View>
       </Modal>
+
+      <PremiumGate
+        visible={showPremiumGate}
+        onClose={() => setShowPremiumGate(false)}
+        title="Premium challenge unlocked"
+        message="Spark Premium unlocks advanced categories and removes the free daily cap."
+      />
     </>
   );
 }
@@ -476,6 +516,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: theme.spacing.xs
   },
+  badgeColumn: {
+    gap: 6
+  },
   categoryBadge: {
     borderRadius: 999,
     paddingHorizontal: 10,
@@ -485,6 +528,19 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: theme.typography.semibold,
     fontSize: 11,
+    textTransform: "uppercase"
+  },
+  premiumBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(230,57,70,0.16)",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6
+  },
+  premiumBadgeText: {
+    color: theme.colors.accentLight,
+    fontFamily: theme.typography.semibold,
+    fontSize: 10,
     textTransform: "uppercase"
   },
   durationBadge: {
