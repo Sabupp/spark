@@ -1,6 +1,9 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 
+import { FadeInView } from "@/components/FadeInView";
+import { InteractiveCard } from "@/components/InteractiveCard";
 import { useAuthStore } from "@/store/useAuthStore";
 import { theme } from "@/theme";
 
@@ -39,28 +42,39 @@ export default function OnboardingScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <Text style={styles.logo}>Spark</Text>
-        <Text style={styles.title}>A private playground for modern couples.</Text>
-        <Text style={styles.subtitle}>
-          Elegant, dark, flirty and designed to strengthen connection one ritual
-          at a time.
-        </Text>
-      </View>
+      <FadeInView delay={40}>
+        <View style={styles.header}>
+          <Text style={styles.logo}>Spark</Text>
+          <Text style={styles.title}>A private playground for modern couples.</Text>
+          <Text style={styles.subtitle}>
+            Elegant, dark, flirty and designed to strengthen connection one ritual
+            at a time.
+          </Text>
+        </View>
+      </FadeInView>
 
       <View style={styles.stack}>
-        {highlights.map((item) => (
-          <View key={item.title} style={styles.card}>
-            <Text style={styles.eyebrow}>{item.eyebrow}</Text>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardCopy}>{item.copy}</Text>
-          </View>
+        {highlights.map((item, index) => (
+          <FadeInView key={item.title} delay={120 + index * 80}>
+            <LinearGradient
+              colors={["rgba(230,57,70,0.12)", "#191919", "#141414"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.card}
+            >
+              <Text style={styles.eyebrow}>{item.eyebrow}</Text>
+              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardCopy}>{item.copy}</Text>
+            </LinearGradient>
+          </FadeInView>
         ))}
       </View>
 
-      <Pressable style={styles.primaryButton} onPress={handleContinue}>
-        <Text style={styles.primaryButtonText}>Experience starten</Text>
-      </Pressable>
+      <FadeInView delay={360}>
+        <InteractiveCard style={styles.primaryButton} onPress={handleContinue}>
+          <Text style={styles.primaryButtonText}>Experience starten</Text>
+        </InteractiveCard>
+      </FadeInView>
     </ScrollView>
   );
 }
@@ -71,8 +85,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background
   },
   content: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.xl
+    padding: theme.spacing.md,
+    gap: theme.spacing.lg
   },
   header: {
     gap: theme.spacing.md,
@@ -80,19 +94,20 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: theme.colors.accentLight,
+    fontFamily: theme.typography.semibold,
     fontSize: 16,
-    fontWeight: "700",
     letterSpacing: 4,
     textTransform: "uppercase"
   },
   title: {
     color: theme.colors.textPrimary,
+    fontFamily: theme.typography.bold,
     fontSize: 36,
-    fontWeight: "700",
     lineHeight: 42
   },
   subtitle: {
     color: theme.colors.textSecondary,
+    fontFamily: theme.typography.body,
     fontSize: 16,
     lineHeight: 24
   },
@@ -100,27 +115,29 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md
   },
   card: {
-    backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.border,
+    borderColor: "rgba(255,255,255,0.06)",
     borderRadius: theme.radii.lg,
     borderWidth: 1,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.sm
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
+    ...theme.shadows.card
   },
   eyebrow: {
     color: theme.colors.accentLight,
     fontSize: 13,
-    fontWeight: "700",
+    fontFamily: theme.typography.semibold,
     letterSpacing: 2,
     textTransform: "uppercase"
   },
   cardTitle: {
     color: theme.colors.textPrimary,
+    fontFamily: theme.typography.semibold,
     fontSize: 20,
-    fontWeight: "700"
+    letterSpacing: -0.2
   },
   cardCopy: {
     color: theme.colors.textSecondary,
+    fontFamily: theme.typography.body,
     fontSize: 15,
     lineHeight: 22
   },
@@ -129,11 +146,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.accent,
     borderRadius: theme.radii.md,
     marginBottom: theme.spacing.xxl,
-    paddingVertical: theme.spacing.md
+    paddingVertical: theme.spacing.sm
   },
   primaryButtonText: {
     color: theme.colors.textPrimary,
+    fontFamily: theme.typography.semibold,
     fontSize: 16,
-    fontWeight: "700"
+    letterSpacing: 0.2
   }
 });

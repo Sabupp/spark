@@ -12,13 +12,19 @@ export default function AppLayout() {
         },
         headerTintColor: theme.colors.textPrimary,
         headerTitleStyle: {
-          fontWeight: "700"
+          fontFamily: theme.typography.semibold,
+          fontSize: 18
         },
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.border,
-          height: 74,
-          paddingTop: 10
+          height: 82,
+          paddingTop: 8
+        },
+        tabBarLabelStyle: {
+          fontFamily: theme.typography.medium,
+          fontSize: 12,
+          paddingBottom: 6
         },
         tabBarActiveTintColor: theme.colors.accent,
         tabBarInactiveTintColor: theme.colors.textSecondary,
