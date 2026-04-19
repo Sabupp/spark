@@ -3,6 +3,7 @@ import { Animated, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { FadeInView } from "@/components/FadeInView";
+import { InteractiveCard } from "@/components/InteractiveCard";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChallengeStore } from "@/store/useChallengeStore";
 import { theme } from "@/theme";
@@ -18,7 +19,7 @@ export default function HomeScreen() {
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
-          toValue: 1.06,
+          toValue: theme.animation.pulseScale,
           duration: 1200,
           useNativeDriver: true
         }),
@@ -62,43 +63,55 @@ export default function HomeScreen() {
 
       <FadeInView delay={120}>
         <View style={styles.metricsRow}>
-          <Animated.View style={[styles.metricCard, { transform: [{ scale: pulse }] }]}>
-            <Text style={styles.metricValue}>{streak}</Text>
-            <Text style={styles.metricLabel}>Day Streak</Text>
-          </Animated.View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{completedToday ? "Done" : "Live"}</Text>
-            <Text style={styles.metricLabel}>Daily Spark</Text>
-          </View>
+          <InteractiveCard style={styles.metricCard}>
+            <Animated.View style={styles.metricContent}>
+              <Animated.Text
+                style={[styles.metricValue, { transform: [{ scale: pulse }] }]}
+              >
+                {streak}
+              </Animated.Text>
+              <Text style={styles.metricLabel}>Day Streak</Text>
+            </Animated.View>
+          </InteractiveCard>
+          <InteractiveCard style={styles.metricCard}>
+            <View style={styles.metricContent}>
+              <Text style={styles.metricValue}>
+                {completedToday ? "Done" : "Live"}
+              </Text>
+              <Text style={styles.metricLabel}>Daily Spark</Text>
+            </View>
+          </InteractiveCard>
         </View>
       </FadeInView>
 
       <FadeInView delay={180}>
-        <LinearGradient
-          colors={["#2A1518", "#1D1A1A", "#151515"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.challengeCard}
-        >
-          <Text style={styles.cardEyebrow}>Daily Challenge</Text>
-          <Text style={styles.challengeTitle}>{dailyChallenge.title}</Text>
-          <Text style={styles.challengeCopy}>{dailyChallenge.description}</Text>
-          <View style={styles.challengeMeta}>
-            <Text style={styles.challengeBadge}>{dailyChallenge.category}</Text>
-            <Text style={styles.challengeTime}>{dailyChallenge.duration}</Text>
-          </View>
-        </LinearGradient>
+        <InteractiveCard style={styles.challengeCard}>
+          <LinearGradient
+            colors={["#2A1518", "#1D1A1A", "#151515"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.challengeGradient}
+          >
+            <Text style={styles.cardEyebrow}>Daily Challenge</Text>
+            <Text style={styles.challengeTitle}>{dailyChallenge.title}</Text>
+            <Text style={styles.challengeCopy}>{dailyChallenge.description}</Text>
+            <View style={styles.challengeMeta}>
+              <Text style={styles.challengeBadge}>{dailyChallenge.category}</Text>
+              <Text style={styles.challengeTime}>{dailyChallenge.duration}</Text>
+            </View>
+          </LinearGradient>
+        </InteractiveCard>
       </FadeInView>
 
       <FadeInView delay={240}>
-        <View style={styles.noteCard}>
+        <InteractiveCard style={styles.noteCard}>
           <Text style={styles.cardEyebrow}>Tonight's Mood</Text>
           <Text style={styles.noteTitle}>Slow burn with playful tension</Text>
           <Text style={styles.noteCopy}>
             Suggestion: dim lights, one shared playlist and ten uninterrupted minutes
             together.
           </Text>
-        </View>
+        </InteractiveCard>
       </FadeInView>
     </ScrollView>
   );
@@ -154,6 +167,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
     ...theme.shadows.card
   },
+  metricContent: {
+    gap: theme.spacing.xs
+  },
   metricValue: {
     color: theme.colors.textPrimary,
     fontFamily: theme.typography.bold,
@@ -167,10 +183,12 @@ const styles = StyleSheet.create({
   },
   challengeCard: {
     borderRadius: theme.radii.lg,
-    gap: theme.spacing.md,
     overflow: "hidden",
-    padding: theme.spacing.md,
     ...theme.shadows.card
+  },
+  challengeGradient: {
+    gap: theme.spacing.md,
+    padding: theme.spacing.md
   },
   cardEyebrow: {
     color: theme.colors.accentLight,

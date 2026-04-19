@@ -28,11 +28,25 @@ export const theme = {
     lg: 24,
     xl: 32
   },
+  fontFamily: {
+    regular: "Inter_400Regular",
+    medium: "Inter_500Medium",
+    semibold: "Inter_600SemiBold",
+    bold: "Inter_700Bold"
+  },
   typography: {
     body: "Inter_400Regular",
     medium: "Inter_500Medium",
     semibold: "Inter_600SemiBold",
     bold: "Inter_700Bold"
+  },
+  animation: {
+    fast: 180,
+    medium: 320,
+    slow: 520,
+    fadeOffset: 18,
+    pressScale: 0.985,
+    pulseScale: 1.06
   },
   shadows: {
     card: {
