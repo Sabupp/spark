@@ -1,9 +1,11 @@
 import { create } from "zustand";
 
 import { CHALLENGES } from "@/data/challenges";
+import { sendPartnerActivityNotificationSkeleton } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCoupleStore } from "@/store/useCoupleStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
 import {
   Challenge,
   ChallengeActionResult,
@@ -192,6 +194,7 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
     }
 
     const { partner } = useCoupleStore.getState();
+    const actorName = useAuthStore.getState().user?.name ?? "Your partner";
 
     set({ isLoading: true });
 
@@ -242,6 +245,16 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       streak: calculateStreakFromCompletions(completedChallenges),
       isLoading: false
     });
+
+    if (partner?.id && useNotificationStore.getState().partnerActivityEnabled) {
+      const challengeTitle =
+        CHALLENGES.find((item) => item.id === challengeId)?.title ?? "today's challenge";
+      await sendPartnerActivityNotificationSkeleton({
+        actorName,
+        challengeTitle,
+        partnerId: partner.id
+      });
+    }
 
     return {
       success: true

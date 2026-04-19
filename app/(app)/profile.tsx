@@ -116,6 +116,15 @@ export default function ProfileScreen() {
       </FadeInView>
 
       <FadeInView delay={260}>
+        <InteractiveCard
+          style={styles.subscriptionSecondary}
+          onPress={() => router.push("/(app)/settings")}
+        >
+          <Text style={styles.subscriptionSecondaryText}>Open Settings</Text>
+        </InteractiveCard>
+      </FadeInView>
+
+      <FadeInView delay={320}>
         <InteractiveCard style={styles.outlineButton} onPress={handleSignOut}>
           <Text style={styles.outlineButtonText}>Logout</Text>
         </InteractiveCard>

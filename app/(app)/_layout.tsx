@@ -1,16 +1,22 @@
 import { useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import * as Notifications from "expo-notifications";
+import { Tabs, useRouter } from "expo-router";
 
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCoupleStore } from "@/store/useCoupleStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
 import { usePremiumStore } from "@/store/usePremiumStore";
 import { theme } from "@/theme";
 
 export default function AppLayout() {
+  const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const isConnected = useCoupleStore((state) => state.isConnected);
   const initializePurchases = usePremiumStore((state) => state.initializePurchases);
+  const initializeNotifications = useNotificationStore(
+    (state) => state.initializeNotifications
+  );
 
   useEffect(() => {
     if (!user?.id) {
@@ -18,7 +24,23 @@ export default function AppLayout() {
     }
 
     void initializePurchases();
-  }, [initializePurchases, user?.id]);
+    void initializeNotifications();
+  }, [initializeNotifications, initializePurchases, user?.id]);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const url = response.notification.request.content.data?.url;
+        if (typeof url === "string") {
+          router.push(url as "/(app)" | "/(app)/challenges" | "/(app)/settings/notifications");
+        }
+      }
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [router]);
 
   return (
     <Tabs
@@ -93,6 +115,12 @@ export default function AppLayout() {
       />
       <Tabs.Screen
         name="paywall"
+        options={{
+          href: null
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
         options={{
           href: null
         }}

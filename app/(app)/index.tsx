@@ -15,6 +15,7 @@ import { InteractiveCard } from "@/components/InteractiveCard";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useChallengeStore } from "@/store/useChallengeStore";
 import { useCoupleStore } from "@/store/useCoupleStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
 import { usePremiumStore } from "@/store/usePremiumStore";
 import { ChallengeCategory } from "@/types";
 import { theme } from "@/theme";
@@ -53,6 +54,12 @@ export default function HomeScreen() {
     completeChallenge
   } = useChallengeStore();
   const { isConnected, partner } = useCoupleStore();
+  const {
+    hasPermission,
+    dailyReminderEnabled,
+    initializeNotifications,
+    scheduleDailyReminder
+  } = useNotificationStore();
   const isPremium = usePremiumStore((state) => state.isPremium);
   const canAccessCategory = usePremiumStore((state) => state.canAccessCategory);
   const remainingTrials = usePremiumStore((state) => state.remainingTrials);
@@ -91,6 +98,20 @@ export default function HomeScreen() {
       getDailyChallenge();
     });
   }, [fetchCompletedChallenges, getDailyChallenge, loadChallenges]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    void initializeNotifications();
+  }, [initializeNotifications, user?.id]);
+
+  useEffect(() => {
+    if (hasPermission && !dailyReminderEnabled) {
+      void scheduleDailyReminder({ hour: 20, minute: 0 });
+    }
+  }, [dailyReminderEnabled, hasPermission, scheduleDailyReminder]);
 
   const formattedDate = useMemo(() => {
     return new Date().toLocaleDateString("en-US", {
@@ -193,6 +214,20 @@ export default function HomeScreen() {
               {isPremium ? "Premium: Unlimited" : `Free: ${todayCompletedCount}/3 today`}
             </Text>
           </View>
+
+          {!hasPermission ? (
+            <InteractiveCard
+              style={styles.permissionBanner}
+              onPress={() => {
+                void initializeNotifications();
+              }}
+            >
+              <Text style={styles.permissionBannerTitle}>Enable notifications</Text>
+              <Text style={styles.permissionBannerCopy}>
+                Get your evening reminder and partner activity updates.
+              </Text>
+            </InteractiveCard>
+          ) : null}
 
           {!dailyChallenge ? (
             <View style={styles.loadingCard}>
@@ -434,6 +469,25 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontFamily: theme.typography.body,
     fontSize: 15
+  },
+  permissionBanner: {
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.borderStrong,
+    borderRadius: theme.radii.md,
+    borderWidth: 1,
+    gap: theme.spacing.xs,
+    padding: theme.spacing.sm
+  },
+  permissionBannerTitle: {
+    color: theme.colors.textPrimary,
+    fontFamily: theme.typography.semibold,
+    fontSize: 16
+  },
+  permissionBannerCopy: {
+    color: theme.colors.textSecondary,
+    fontFamily: theme.typography.body,
+    fontSize: 14,
+    lineHeight: 20
   },
   dailyCard: {
     borderRadius: theme.radii.lg,
