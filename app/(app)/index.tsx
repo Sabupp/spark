@@ -13,6 +13,10 @@ export default function HomeScreen() {
   const streak = useChallengeStore((state) => state.streak);
   const dailyChallenge = useChallengeStore((state) => state.dailyChallenge);
   const completedToday = useChallengeStore((state) => state.completedToday);
+  const loadChallenges = useChallengeStore((state) => state.loadChallenges);
+  const fetchCompletedChallenges = useChallengeStore(
+    (state) => state.fetchCompletedChallenges
+  );
   const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -37,6 +41,11 @@ export default function HomeScreen() {
       animation.stop();
     };
   }, [pulse]);
+
+  useEffect(() => {
+    loadChallenges();
+    void fetchCompletedChallenges();
+  }, [fetchCompletedChallenges, loadChallenges]);
 
   return (
     <ScrollView
@@ -93,11 +102,20 @@ export default function HomeScreen() {
             style={styles.challengeGradient}
           >
             <Text style={styles.cardEyebrow}>Daily Challenge</Text>
-            <Text style={styles.challengeTitle}>{dailyChallenge.title}</Text>
-            <Text style={styles.challengeCopy}>{dailyChallenge.description}</Text>
+            <Text style={styles.challengeTitle}>
+              {dailyChallenge?.title ?? "Fresh spark loading"}
+            </Text>
+            <Text style={styles.challengeCopy}>
+              {dailyChallenge?.description ??
+                "We are preparing a fresh suggestion based on your momentum."}
+            </Text>
             <View style={styles.challengeMeta}>
-              <Text style={styles.challengeBadge}>{dailyChallenge.category}</Text>
-              <Text style={styles.challengeTime}>{dailyChallenge.duration}</Text>
+              <Text style={styles.challengeBadge}>
+                {dailyChallenge?.category ?? "start"}
+              </Text>
+              <Text style={styles.challengeTime}>
+                {dailyChallenge?.duration ?? "10 min"}
+              </Text>
             </View>
           </LinearGradient>
         </InteractiveCard>

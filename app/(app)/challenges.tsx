@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -7,13 +8,40 @@ import { useChallengeStore } from "@/store/useChallengeStore";
 import { ChallengeCategory } from "@/types";
 import { theme } from "@/theme";
 
-const filters: ChallengeCategory[] = ["All", "Flirty", "Emotional", "Intimate"];
+const filters: Array<ChallengeCategory | "All"> = [
+  "All",
+  "start",
+  "spicy",
+  "hot",
+  "extreme",
+  "date_night",
+  "communication"
+];
+
+const filterLabels: Record<ChallengeCategory | "All", string> = {
+  All: "All",
+  start: "Start",
+  spicy: "Spicy",
+  hot: "Hot",
+  extreme: "Extreme",
+  date_night: "Date Night",
+  communication: "Communication"
+};
 
 export default function ChallengesScreen() {
   const items = useChallengeStore((state) => state.filteredChallenges());
   const activeFilter = useChallengeStore((state) => state.activeFilter);
   const setActiveFilter = useChallengeStore((state) => state.setActiveFilter);
   const toggleChallenge = useChallengeStore((state) => state.toggleChallengeComplete);
+  const loadChallenges = useChallengeStore((state) => state.loadChallenges);
+  const fetchCompletedChallenges = useChallengeStore(
+    (state) => state.fetchCompletedChallenges
+  );
+
+  useEffect(() => {
+    loadChallenges();
+    void fetchCompletedChallenges();
+  }, [fetchCompletedChallenges, loadChallenges]);
 
   return (
     <ScrollView
@@ -45,12 +73,12 @@ export default function ChallengesScreen() {
                     style={[
                       styles.filterLabel,
                       active && styles.filterLabelActive
-                    ]}
-                  >
-                    {filter}
-                  </Text>
-                </InteractiveCard>
-              );
+                  ]}
+                >
+                  {filterLabels[filter]}
+                </Text>
+              </InteractiveCard>
+            );
             })}
           </View>
         </ScrollView>

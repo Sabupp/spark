@@ -34,24 +34,65 @@ export type AuthState = {
   toggleEveningMode: () => void;
 };
 
-export type ChallengeCategory = "All" | "Flirty" | "Emotional" | "Intimate";
+export type ChallengeCategory =
+  | "start"
+  | "spicy"
+  | "hot"
+  | "extreme"
+  | "date_night"
+  | "communication";
+
+export type ChallengeFilter = "All" | ChallengeCategory;
 
 export type Challenge = {
   id: string;
   title: string;
   description: string;
-  category: Exclude<ChallengeCategory, "All">;
+  category: ChallengeCategory;
+  difficulty: 1 | 2 | 3 | 4 | 5;
   duration: string;
-  completed: boolean;
+  points: number;
+  completed?: boolean;
+};
+
+export type UserChallenge = {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  completed_at: string;
+  partner_id?: string;
+  rating?: number;
+  notes?: string;
+};
+
+export type ChallengeActionResult = {
+  success: boolean;
+  error?: string;
 };
 
 export type ChallengeState = {
-  streak: number;
-  activeFilter: ChallengeCategory;
-  completedToday: boolean;
   challenges: Challenge[];
-  dailyChallenge: Challenge;
-  setActiveFilter: (filter: ChallengeCategory) => void;
+  dailyChallenge: Challenge | null;
+  completedChallenges: UserChallenge[];
+  streak: number;
+  totalPoints: number;
+  isLoading: boolean;
+  activeFilter: ChallengeFilter;
+  completedToday: boolean;
+  loadChallenges: () => void;
+  fetchCompletedChallenges: () => Promise<void>;
+  getDailyChallenge: () => Challenge | null;
+  completeChallenge: (
+    challengeId: string,
+    rating?: number,
+    notes?: string
+  ) => Promise<ChallengeActionResult>;
+  calculateStreak: () => number;
+  getChallengesByCategory: (category: ChallengeCategory) => Challenge[];
+  getChallengesByDifficulty: (difficulty: number) => Challenge[];
+  getRecommendedDifficulty: () => 1 | 2 | 3 | 4 | 5;
+  incrementStreak: () => void;
+  setActiveFilter: (filter: ChallengeFilter) => void;
   toggleChallengeComplete: (id: string) => void;
   filteredChallenges: () => Challenge[];
 };
