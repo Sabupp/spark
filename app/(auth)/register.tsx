@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,17 +13,16 @@ import { Link, useRouter } from "expo-router";
 import { FadeInView } from "@/components/FadeInView";
 import { InteractiveCard } from "@/components/InteractiveCard";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useCoupleStore } from "@/store/useCoupleStore";
 import { theme } from "@/theme";
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const signIn = useAuthStore((state) => state.signIn);
-  const onboardingCompleted = useAuthStore((state) => state.onboardingCompleted);
-  const isConnected = useCoupleStore((state) => state.isConnected);
+  const signUp = useAuthStore((state) => state.signUp);
+  const isLoading = useAuthStore((state) => state.isLoading);
   const [name, setName] = useState("Mia");
   const [email, setEmail] = useState("mia@spark.app");
   const [password, setPassword] = useState("spark123");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const canSubmit = useMemo(() => {
     return (
@@ -32,24 +32,21 @@ export default function RegisterScreen() {
     );
   }, [email, name, password]);
 
-  const handleRegister = () => {
-    if (!canSubmit) {
+  const handleRegister = async () => {
+    if (!canSubmit || isLoading) {
       return;
     }
 
-    signIn({
-      id: "mock-user-2",
-      name,
-      email
-    });
+    setErrorMessage(null);
+    const result = await signUp(email.trim(), password, name.trim());
 
-    if (!onboardingCompleted) {
+    if (!result.success) {
+      setErrorMessage(result.error ?? "Registration failed.");
+      return;
+    }
+
+    if (!useAuthStore.getState().onboardingCompleted) {
       router.replace("/(auth)/onboarding");
-      return;
-    }
-
-    if (!isConnected) {
-      router.replace("/(app)/partner");
       return;
     }
 
@@ -110,8 +107,14 @@ export default function RegisterScreen() {
             style={[styles.primaryButton, !canSubmit && styles.buttonDisabled]}
             onPress={handleRegister}
           >
-            <Text style={styles.primaryButtonText}>Mock-Account erstellen</Text>
+            {isLoading ? (
+              <ActivityIndicator color={theme.colors.textPrimary} />
+            ) : (
+              <Text style={styles.primaryButtonText}>Account erstellen</Text>
+            )}
           </InteractiveCard>
+
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
           <Link href="/(auth)/login" asChild>
             <InteractiveCard style={styles.secondaryButton}>
@@ -190,6 +193,12 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6
+  },
+  errorText: {
+    color: theme.colors.accentLight,
+    fontFamily: theme.typography.body,
+    fontSize: 14,
+    lineHeight: 20
   },
   primaryButtonText: {
     color: theme.colors.textPrimary,

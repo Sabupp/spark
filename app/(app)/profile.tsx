@@ -21,8 +21,8 @@ export default function ProfileScreen() {
   const toggleEveningMode = useAuthStore((state) => state.toggleEveningMode);
   const signOut = useAuthStore((state) => state.signOut);
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await signOut();
     router.replace("/(auth)/login");
   };
 

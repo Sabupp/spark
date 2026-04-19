@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,28 +19,31 @@ import { theme } from "@/theme";
 export default function LoginScreen() {
   const router = useRouter();
   const signIn = useAuthStore((state) => state.signIn);
-  const onboardingCompleted = useAuthStore((state) => state.onboardingCompleted);
+  const isLoading = useAuthStore((state) => state.isLoading);
   const isConnected = useCoupleStore((state) => state.isConnected);
   const [email, setEmail] = useState("alex@spark.app");
   const [password, setPassword] = useState("spark123");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const canSubmit = useMemo(
     () => email.trim().length > 0 && password.trim().length >= 6,
     [email, password]
   );
 
-  const handleLogin = () => {
-    if (!canSubmit) {
+  const handleLogin = async () => {
+    if (!canSubmit || isLoading) {
       return;
     }
 
-    signIn({
-      id: "mock-user-1",
-      name: "Alex",
-      email
-    });
+    setErrorMessage(null);
+    const result = await signIn(email.trim(), password);
 
-    if (!onboardingCompleted) {
+    if (!result.success) {
+      setErrorMessage(result.error ?? "Login failed.");
+      return;
+    }
+
+    if (!useAuthStore.getState().onboardingCompleted) {
       router.replace("/(auth)/onboarding");
       return;
     }
@@ -78,7 +82,7 @@ export default function LoginScreen() {
         >
           <Text style={styles.cardTitle}>Einloggen</Text>
           <Text style={styles.cardCopy}>
-            Nutze den Mock-Login und spring direkt in die Experience.
+            Logge dich mit deinem Spark Account ein und kehre in euren privaten Raum zuruck.
           </Text>
 
           <TextInput
@@ -103,8 +107,14 @@ export default function LoginScreen() {
             style={[styles.primaryButton, !canSubmit && styles.buttonDisabled]}
             onPress={handleLogin}
           >
-            <Text style={styles.primaryButtonText}>Weiter zu Spark</Text>
+            {isLoading ? (
+              <ActivityIndicator color={theme.colors.textPrimary} />
+            ) : (
+              <Text style={styles.primaryButtonText}>Weiter zu Spark</Text>
+            )}
           </InteractiveCard>
+
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
           <Link href="/(auth)/register" asChild>
             <InteractiveCard style={styles.secondaryButton}>
@@ -189,6 +199,12 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6
+  },
+  errorText: {
+    color: theme.colors.accentLight,
+    fontFamily: theme.typography.body,
+    fontSize: 14,
+    lineHeight: 20
   },
   primaryButtonText: {
     color: theme.colors.textPrimary,

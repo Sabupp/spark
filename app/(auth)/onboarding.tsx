@@ -1,10 +1,18 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 
 import { FadeInView } from "@/components/FadeInView";
 import { InteractiveCard } from "@/components/InteractiveCard";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useCoupleStore } from "@/store/useCoupleStore";
 import { theme } from "@/theme";
 
 const highlights = [
@@ -29,10 +37,25 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const completeOnboarding = useAuthStore((state) => state.completeOnboarding);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const isConnected = useCoupleStore((state) => state.isConnected);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleContinue = () => {
-    completeOnboarding();
-    router.replace(isAuthenticated ? "/(app)/partner" : "/(auth)/login");
+  const handleContinue = async () => {
+    setErrorMessage(null);
+    const result = await completeOnboarding();
+
+    if (!result.success) {
+      setErrorMessage(result.error ?? "Could not save onboarding.");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      router.replace("/(auth)/login");
+      return;
+    }
+
+    router.replace(isConnected ? "/(app)" : "/(app)/partner");
   };
 
   return (
@@ -71,9 +94,15 @@ export default function OnboardingScreen() {
 
       <FadeInView delay={360}>
         <InteractiveCard style={styles.primaryButton} onPress={handleContinue}>
-          <Text style={styles.primaryButtonText}>Experience starten</Text>
+          {isLoading ? (
+            <ActivityIndicator color={theme.colors.textPrimary} />
+          ) : (
+            <Text style={styles.primaryButtonText}>Experience starten</Text>
+          )}
         </InteractiveCard>
       </FadeInView>
+
+      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
     </ScrollView>
   );
 }
@@ -152,5 +181,11 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.semibold,
     fontSize: 16,
     letterSpacing: 0.2
+  },
+  errorText: {
+    color: theme.colors.accentLight,
+    fontFamily: theme.typography.body,
+    fontSize: 14,
+    lineHeight: 20
   }
 });

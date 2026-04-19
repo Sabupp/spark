@@ -4,6 +4,11 @@ export type User = {
   email: string;
 };
 
+export type AuthActionResult = {
+  success: boolean;
+  error?: string;
+};
+
 export type AuthPreferences = {
   notificationsEnabled: boolean;
   eveningModeEnabled: boolean;
@@ -12,11 +17,19 @@ export type AuthPreferences = {
 export type AuthState = {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
+  hasCheckedSession: boolean;
   onboardingCompleted: boolean;
   preferences: AuthPreferences;
-  signIn: (user: User) => void;
-  signOut: () => void;
-  completeOnboarding: () => void;
+  signUp: (
+    email: string,
+    password: string,
+    name: string
+  ) => Promise<AuthActionResult>;
+  signIn: (email: string, password: string) => Promise<AuthActionResult>;
+  signOut: () => Promise<void>;
+  getSession: () => Promise<void>;
+  completeOnboarding: () => Promise<AuthActionResult>;
   toggleNotifications: () => void;
   toggleEveningMode: () => void;
 };
